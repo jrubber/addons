@@ -275,6 +275,14 @@ class rs485:
         soc.settimeout(None)
         return soc
 
+    def close(self):
+        try:
+            if self.type == 'socket':
+                logger.debug('Close socket gracefully')
+                self._con.close()
+        except:
+            logger.debug('Connection close has failed')
+
 class Kocom(rs485):
     def __init__(self, client, name, device, packet_len):
         self.client = client
@@ -371,14 +379,6 @@ class Kocom(rs485):
             logging.info('[Serial Write] Connection Error')
             if self.d_type == 'socket':
                 self.connected = False
-
-    def close(self):
-        try:
-            if self.d_type == 'socket':
-                logger.debug('Close socket gracefully')
-                self.d_serial.close()
-        except:
-            logger.debug('Connection close has failed')
 
     def connect_mqtt(self, server, name):
         mqtt_client = mqtt.Client()
@@ -1544,7 +1544,7 @@ if __name__ == '__main__':
                 kocom = Kocom(r, _name, _name, 42)
                 if not kocom.connection_lost():
                     logger.info('[ERROR] 서버 연결이 끊어져 1분 후 재접속을 시도합니다.')
-                    kocom.close()
+                    r.close()
                     time.sleep(60)
                     connection_flag = False
         if _grex_ventilator is not False and _grex_controller is not False:

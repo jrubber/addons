@@ -730,7 +730,7 @@ class Kocom(rs485):
                         'temp_stat_tpl': '{{ value_json.target_temp }}',
                         'curr_temp_t': '{}/{}/{}/state'.format(HA_PREFIX, HA_CLIMATE, room),
                         'curr_temp_tpl': '{{ value_json.current_temp }}',
-                        'min_temp': 10,
+                        'min_temp': 15,
                         'max_temp': 30,
                         'temp_step': 1,
                         'modes': ['off', 'heat', 'fan_only'],

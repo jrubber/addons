@@ -289,6 +289,8 @@ class Kocom(rs485):
         self._name = name
         self.connected = True
 
+        self._lock = threading.RLock()
+
         self.ha_registry = False
         self.kocom_scan = True
         self.scan_packet_buf = []
@@ -870,6 +872,7 @@ class Kocom(rs485):
             return False
 
     def packet_parsing(self, packet, name='kocom', from_to='From'):
+        self._lock.acquire() # LOCK
         p = self.parse_packet(packet)
         v = self.value_packet(p)
 
@@ -893,6 +896,7 @@ class Kocom(rs485):
                     self.send_to_homeassistant(v['src_device'], v['src_room'], v['value'])
         except:
             logger.info('[{} {}]Error {}'.format(from_to, name, packet))
+        self._lock.release() # UNLOCK
 
     def set_list(self, device, room, value, name='kocom'):
         try:
@@ -990,6 +994,7 @@ class Kocom(rs485):
     def set_serial(self, device, room, target, value, cmd='상태'):
         if (time.time() - self.tick) < KOCOM_INTERVAL / 1000:
             return
+        self._lock.acquire() # LOCK
         if cmd == '상태':
             logger.info('[To {}]{}/{}/{} -> {}'.format(self._name, device, room, target, value))
         elif cmd == '조회':
@@ -1005,6 +1010,7 @@ class Kocom(rs485):
         if device == DEVICE_ELEVATOR:
             self.send_to_homeassistant(DEVICE_ELEVATOR, DEVICE_WALLPAD, 'on')
         self.write(packet)
+        self._lock.release() # UNLOCK
 
     def make_packet(self, device, room, cmd, target, value):
         p_header = 'aa5530bc00'

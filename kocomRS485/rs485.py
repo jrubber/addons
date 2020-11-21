@@ -872,14 +872,15 @@ class Kocom(rs485):
             return False
 
     def packet_parsing(self, packet, name='kocom', from_to='From'):
-        self._lock.acquire() # LOCK
         p = self.parse_packet(packet)
         v = self.value_packet(p)
 
         try:
             if v['command'] == "조회" and v['src_device'] == DEVICE_WALLPAD:
                 if name == 'HA':
+                    self._lock.acquire() # LOCK
                     self.write(self.make_packet(v['dst_device'], v['dst_room'], '조회', '', ''))
+                    self._lock.release() # UNLOCK
                 logger.debug('[{} {}]{}({}) {}({}) -> {}({})'.format(from_to, name, v['type'], v['command'], v['src_device'], v['src_room'], v['dst_device'], v['dst_room']))
             else:
                 logger.debug('[{} {}]{}({}) {}({}) -> {}({}) = {}'.format(from_to, name, v['type'], v['command'], v['src_device'], v['src_room'], v['dst_device'], v['dst_room'], v['value']))
@@ -896,7 +897,6 @@ class Kocom(rs485):
                     self.send_to_homeassistant(v['src_device'], v['src_room'], v['value'])
         except:
             logger.info('[{} {}]Error {}'.format(from_to, name, packet))
-        self._lock.release() # UNLOCK
 
     def set_list(self, device, room, value, name='kocom'):
         try:
@@ -994,7 +994,6 @@ class Kocom(rs485):
     def set_serial(self, device, room, target, value, cmd='상태'):
         if (time.time() - self.tick) < KOCOM_INTERVAL / 1000:
             return
-        self._lock.acquire() # LOCK
         if cmd == '상태':
             logger.info('[To {}]{}/{}/{} -> {}'.format(self._name, device, room, target, value))
         elif cmd == '조회':
@@ -1009,6 +1008,7 @@ class Kocom(rs485):
             logger.debug('[To {}]{}({}) {}({}) -> {}({}) = {}'.format(self._name, v['type'], v['command'], v['src_device'], v['src_room'], v['dst_device'], v['dst_room'], v['value']))
         if device == DEVICE_ELEVATOR:
             self.send_to_homeassistant(DEVICE_ELEVATOR, DEVICE_WALLPAD, 'on')
+        self._lock.acquire() # LOCK
         self.write(packet)
         self._lock.release() # UNLOCK
 

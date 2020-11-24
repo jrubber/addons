@@ -28,7 +28,7 @@ CONF_LOGLEVEL = 'info' # debug, info, warn
 # 본인에 맞게 수정하세요
 
 # 보일러 초기값
-INIT_TEMP = 22
+INIT_TEMP = 20
 # 환풍기 초기속도 ['low', 'medium', 'high']
 DEFAULT_SPEED = 'medium'
 # 조명 / 플러그 갯수
@@ -289,7 +289,7 @@ class Kocom(rs485):
         self._name = name
         self.connected = True
 
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
 
         self.ha_registry = False
         self.kocom_scan = True
@@ -880,6 +880,7 @@ class Kocom(rs485):
                 if name == 'HA':
                     self._lock.acquire() # LOCK
                     self.write(self.make_packet(v['dst_device'], v['dst_room'], '조회', '', ''))
+                    time.sleep(0.1)      # DELAY
                     self._lock.release() # UNLOCK
                 logger.debug('[{} {}]{}({}) {}({}) -> {}({})'.format(from_to, name, v['type'], v['command'], v['src_device'], v['src_room'], v['dst_device'], v['dst_room']))
             else:
@@ -1010,6 +1011,7 @@ class Kocom(rs485):
             self.send_to_homeassistant(DEVICE_ELEVATOR, DEVICE_WALLPAD, 'on')
         self._lock.acquire() # LOCK
         self.write(packet)
+        time.sleep(0.1)      # DELAY
         self._lock.release() # UNLOCK
 
     def make_packet(self, device, room, cmd, target, value):
